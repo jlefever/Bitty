@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Bitty.Bencode.IR;
+using System.Collections.Generic;
 using System.Text;
 
-namespace Bitty
+namespace Bitty.Bencode
 {
     public class BPrinter : IBNodeVisitor<object>
     {

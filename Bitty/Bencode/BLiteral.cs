@@ -1,4 +1,4 @@
-﻿namespace Bitty
+﻿namespace Bitty.Bencode
 {
     public static class BLiteral
     {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bitty.Bencode;
+using System;
 using System.IO;
 
 namespace Bitty
