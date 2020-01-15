@@ -2,25 +2,46 @@
 
 namespace Bitty
 {
-    public abstract class BNode { }
+    public interface IBNodeVisitor<out TResult>
+    {
+        TResult VisitBDict(BDict node);
+        TResult VisitBList(BList node);
+        TResult VisitBInt(BInt node);
+        TResult VisitBString(BString node);
+    }
+
+    public abstract class BNode
+    {
+        public abstract TResult Accept<TResult>(IBNodeVisitor<TResult> visitor);
+    }
 
     public class BDict : BNode
     {
-        IDictionary<byte[], BNode> Value { get; }
+        public IDictionary<BString, BNode> Value { get; }
 
-        public BDict(IDictionary<byte[], BNode> value)
+        public BDict(IDictionary<BString, BNode> value)
         {
             Value = value;
+        }
+
+        public override TResult Accept<TResult>(IBNodeVisitor<TResult> visitor)
+        {
+            return visitor.VisitBDict(this);
         }
     }
 
     public class BList : BNode
     {
-        IList<BNode> Value { get; }
+        public BNode[] Value { get; }
 
-        public BList(IList<BNode> value)
+        public BList(BNode[] value)
         {
             Value = value;
+        }
+
+        public override TResult Accept<TResult>(IBNodeVisitor<TResult> visitor)
+        {
+            return visitor.VisitBList(this);
         }
     }
 
@@ -32,6 +53,11 @@ namespace Bitty
         {
             Value = value;
         }
+
+        public override TResult Accept<TResult>(IBNodeVisitor<TResult> visitor)
+        {
+            return visitor.VisitBInt(this);
+        }
     }
 
     public class BString : BNode
@@ -41,6 +67,11 @@ namespace Bitty
         public BString(byte[] value)
         {
             Value = value;
+        }
+
+        public override TResult Accept<TResult>(IBNodeVisitor<TResult> visitor)
+        {
+            return visitor.VisitBString(this);
         }
     }
 }

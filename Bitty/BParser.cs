@@ -35,13 +35,13 @@ namespace Bitty
         private BDict ParseDict()
         {
             // TODO: Ensure uniqueness and order of keys
-            var dict = new Dictionary<byte[], BNode>();
+            var dict = new Dictionary<BString, BNode>();
 
             do
             {
                 var key = ParseString();
                 var value = ParseAnyType();
-                dict.TryAdd(key.Value, value);
+                dict.TryAdd(key, value);
             }
             while (!IsAtEnd() && !Match('e'));
 
@@ -58,7 +58,7 @@ namespace Bitty
             }
             while (!IsAtEnd() && !Match('e'));
 
-            return new BList(list);
+            return new BList(list.ToArray());
         }
 
         private BInt ParseInt()
