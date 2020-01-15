@@ -1,22 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Bitty
 {
+    public class BParserErrorListener
+    {
+        private readonly TextWriter _writer;
+
+        public BParserErrorListener(TextWriter writer)
+        {
+            _writer = writer;
+        }
+
+        public void Fail(int index, string message)
+        {
+            _writer.WriteLine($"Failed at index {index}: {message}");
+        }
+    }
+
     public class BParser
     {
+        private class BParserException : Exception
+        {
+            public BParserException(string message) : base(message) { }
+        }
+
+        private readonly BParserErrorListener _errorListener;
         private readonly byte[] _source;
-        private int _start = 0;
         private int _current = 0;
 
-        public BParser(byte[] source)
+        public BParser(byte[] source, BParserErrorListener errorListener)
         {
             _source = source;
+            _errorListener = errorListener;
         }
 
         public BNode Parse()
         {
-            return ParseAnyType();
+            try
+            {
+                return ParseAnyType();
+            }
+            catch (BParserException e)
+            {
+                _errorListener.Fail(_current, e.Message);
+                return null;
+            }
         }
 
         private BNode ParseAnyType()
@@ -25,10 +55,17 @@ namespace Bitty
 
             switch (b)
             {
-                case 'd': Advance(); return ParseDict();
-                case 'l': Advance(); return ParseList();
-                case 'i': Advance(); return ParseInt();
-                default: return ParseString();
+                case BLiteral.StartDict:
+                    Advance();
+                    return ParseDict();
+                case BLiteral.StartList:
+                    Advance();
+                    return ParseList();
+                case BLiteral.StartInt:
+                    Advance();
+                    return ParseInt();
+                default:
+                    return ParseString();
             }
         }
 
@@ -43,7 +80,7 @@ namespace Bitty
                 var value = ParseAnyType();
                 dict.TryAdd(key, value);
             }
-            while (!IsAtEnd() && !Match('e'));
+            while (!IsAtEnd() && !Match(BLiteral.End));
 
             return new BDict(dict);
         }
@@ -56,7 +93,7 @@ namespace Bitty
             {
                 list.Add(ParseAnyType());
             }
-            while (!IsAtEnd() && !Match('e'));
+            while (!IsAtEnd() && !Match(BLiteral.End));
 
             return new BList(list.ToArray());
         }
@@ -64,36 +101,36 @@ namespace Bitty
         private BInt ParseInt()
         {
             var value = ParseSignedNumber();
-            Consume('e', "Expected 'e' to terminate integer");
+            Consume(BLiteral.End, "Expected '"
+                + BLiteral.End + "' to terminate integer.");
             return new BInt(value);
         }
 
         private BString ParseString()
         {
             var length = ParseNumber();
-            Consume(':', "Expcted ':' after length of string");
+            Consume(BLiteral.StrDelimitor, "Expcted '"
+                + BLiteral.StrDelimitor + "' after length of string.");
 
-            // TODO: Use Extract() !!
-            var bytes = new List<byte>();
+            var bytes = new byte[length];
 
-            for(int i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                bytes.Add(Advance());
+                bytes[i] = Advance();
             }
 
-            return new BString(bytes.ToArray());
+            return new BString(bytes);
         }
 
         private long ParseSignedNumber()
         {
-            var hasMinus = Match('-');
+            var hasMinus = Match(BLiteral.Minus);
             var value = ParseNumber();
             return hasMinus ? -1L * value : value;
         }
 
         private long ParseNumber()
         {
-            // TODO: Use Extract() !!
             var digits = new List<char>();
 
             do
@@ -102,7 +139,14 @@ namespace Bitty
             }
             while (!IsAtEnd() && IsDigit(Peek()));
 
-            return Convert.ToInt64(string.Concat(digits));
+            var text = string.Concat(digits);
+
+            if (!long.TryParse(text, out long number))
+            {
+                throw new BParserException("Could not parse number as Int64.");
+            }
+
+            return number;
         }
 
         private void Consume(char c, string message)
@@ -114,8 +158,7 @@ namespace Bitty
         {
             if (!Match(b))
             {
-                // TODO: Proper error reporting
-                throw new Exception(message);
+                throw new BParserException(message);
             }
         }
 
@@ -143,11 +186,6 @@ namespace Bitty
         private static bool IsDigit(byte b)
         {
             return b >= '0' && b <= '9';
-        }
-
-        private static bool IsAscii(byte c)
-        {
-            return c < 128;
         }
 
         private bool IsAtEnd()

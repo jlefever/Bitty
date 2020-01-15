@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Bitty
 {
@@ -12,7 +13,7 @@ namespace Bitty
 
             var bytes = File.ReadAllBytes(readFile);
 
-            var parser = new BParser(bytes);
+            var parser = new BParser(bytes, new BParserErrorListener(Console.Out));
 
             var root = parser.Parse();
 
