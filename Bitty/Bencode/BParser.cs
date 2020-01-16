@@ -56,18 +56,31 @@ namespace Bitty.Bencode
 
         private BDict ParseDict()
         {
-            // TODO: Ensure uniqueness and order of keys
-            var dict = new Dictionary<BString, BNode>();
+            var dict = new BDict();
+            var largest = (BString)null;
 
             do
             {
                 var key = ParseString();
-                var value = ParseAnyType();
-                dict.TryAdd(key, value);
+
+                if (dict.Value.ContainsKey(key))
+                {
+                    var msg = $"Key '{key}' is already present in the dictionary.";
+                    throw new BParserException(msg);
+                }
+
+                if (dict.Value.Comparer.Compare(largest, key) > 0)
+                {
+                    var msg = $"Key '{key}' is not lexicographically larger than preceding keys.";
+                    throw new BParserException(msg);
+                }
+
+                largest = key;
+                dict.Value.Add(key, ParseAnyType());
             }
             while (!IsAtEnd() && !Match(BLiteral.End));
 
-            return new BDict(dict);
+            return dict;
         }
 
         private BList ParseList()
