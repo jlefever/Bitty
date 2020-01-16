@@ -1,10 +1,17 @@
-﻿namespace Bitty.Bencode.IR
+﻿using System.Collections.Generic;
+
+namespace Bitty.Bencode.IR
 {
     public class BList : BNode
     {
-        public BNode[] Value { get; }
+        public IList<BNode> Value { get; }
 
-        public BList(BNode[] value)
+        public BList()
+        {
+            Value = new List<BNode>();
+        }
+
+        public BList(IList<BNode> value)
         {
             Value = value;
         }

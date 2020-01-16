@@ -40,7 +40,7 @@ namespace Bitty.Bencode
         public object VisitBInt(BInt node)
         {
             _bytes.Add((byte)BLiteral.StartInt);
-            _bytes.AddRange(ToAsciiBytes(node.Value));
+            _bytes.AddRange(ToAscii(node.Value));
             _bytes.Add((byte)BLiteral.End);
             return null;
         }
@@ -60,7 +60,7 @@ namespace Bitty.Bencode
 
         public object VisitBString(BString node)
         {
-            _bytes.AddRange(ToAsciiBytes(node.Value.LongLength));
+            _bytes.AddRange(ToAscii(node.Value.LongLength));
             _bytes.Add((byte)BLiteral.StrDelimitor);
 
             foreach (var b in node.Value)
@@ -71,7 +71,7 @@ namespace Bitty.Bencode
             return null;
         }
 
-        private byte[] ToAsciiBytes(long value)
+        private byte[] ToAscii(long value)
         {
             return Encoding.ASCII.GetBytes(value.ToString());
         }

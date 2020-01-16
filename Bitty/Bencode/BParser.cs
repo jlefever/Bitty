@@ -85,15 +85,15 @@ namespace Bitty.Bencode
 
         private BList ParseList()
         {
-            var list = new List<BNode>();
+            var list = new BList();
 
             do
             {
-                list.Add(ParseAnyType());
+                list.Value.Add(ParseAnyType());
             }
             while (!IsAtEnd() && !Match(BLiteral.End));
 
-            return new BList(list.ToArray());
+            return list;
         }
 
         private BInt ParseInt()
