@@ -111,6 +111,12 @@ namespace Bitty.Bencode
         {
             var hasMinus = Match(BLiteral.Minus);
             var value = ParseNumber();
+
+            if (value == 0 && hasMinus)
+            {
+                throw new BParserException("'-0' is not a valid integer.");
+            }
+
             return hasMinus ? -1L * value : value;
         }
 
